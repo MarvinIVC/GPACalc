@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EZGradeCalc</title>
+  <style>
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #6a11cb, #2575fc);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+      max-width: 600px;
+      width: 100%;
+      margin: 20px;
+      color: #333;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: #2575fc;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      color: #6a11cb;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    p {
+      font-size: 0.9rem;
+      text-align: center;
+      color: #666;
+    }
+
+    .btn {
+      background-color: #2575fc;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      width: 100%;
+      margin-bottom: 15px;
+    }
+
+    .btn:hover {
+      background-color: #1b64d6;
+    }
+
+    .category-row, .grade-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+
+    input[type="text"], input[type="number"] {
+      width: calc(50% - 10px);
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      margin-right: 10px;
+      font-size: 0.9rem;
+    }
+
+    input[type="number"] {
+      width: 30%;
+    }
+
+    .result {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #6a11cb;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .error {
+      color: red;
+      font-size: 0.9rem;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .grade-list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 5px 0;
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .delete-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .delete-btn:hover {
+      background-color: #c82333;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+      }
+
+      h1 {
+        font-size: 1.7rem;
+      }
+
+      h2 {
+        font-size: 1.3rem;
+      }
+
+      input[type="text"], input[type="number"] {
+        width: calc(100% - 20px);
+        margin-right: 0;
+      }
+
+      .category-row, .grade-row {
+        flex-direction: column;
+      }
+    }
+
+    /* Scrollbar Styles */
+    .container::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .container::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    .container::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 10px;
+    }
+
+    .container::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container" id="main-container">
+    <h1>EZGradeCalc</h1>
+    
+    <button class="btn" onclick="startSubjectGrade()">Calculate Subject Grade</button>
+    <button class="btn" disabled>Calculate GPA (Coming Soon)</button>
+  </div>
+
+  <!-- Step 1: Add Categories -->
+  <div class="container" id="step1-container" style="display:none;">
+    <h2>Step 1: Add Assignment Categories</h2>
+    <p>Enter the categories and their weight in the final grade (e.g. Homework 20%).</p>
+    <div id="categories"></div>
+    <div class="category-row">
+      <input type="text" id="categoryName" placeholder="Category (e.g. Homework)" />
+      <input type="number" id="categoryWeight" placeholder="Weight (%)" min="1" max="100" />
+      <button class="btn" onclick="addCategory()">Add Category</button>
+    </div>
+    <button class="btn" onclick="proceedToStep2()">Next: Add Grades</button>
+    <div class="error" id="error1"></div>
+  </div>
+
+  <!-- Step 2: Add Grades -->
+  <div class="container" id="step2-container" style="display:none;">
+    <h2>Step 2: Add Assignment Grades</h2>
+    <p>For each category, enter the grades (e.g. 100/100, 180/200).</p>
+    <div id="grades"></div>
+    <button class="btn" onclick="calculateFinalGrade()">Calculate Final Grade</button>
+    <div class="error" id="error2"></div>
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    let categories = [];
+    let totalWeight = 0;
+
+    // Start Subject Grade Calculation
+    function startSubjectGrade() {
+      document.getElementById('main-container').style.display = 'none';
+      document.getElementById('step1-container').style.display = 'block';
+    }
+
+    // Add Category with Weight Validation
+    function addCategory() {
+      const categoryName = document.getElementById('categoryName').value;
+      const categoryWeight = parseFloat(document.getElementById('categoryWeight').value);
+
+      if (categoryName && categoryWeight > 0) {
+        if (totalWeight + categoryWeight > 100) {
+          document.getElementById('error1').innerHTML = 'Error: Total weight cannot exceed 100%!';
+        } else {
+          totalWeight += categoryWeight;
+          categories.push({
+            name: categoryName,
+            weight: categoryWeight,
+            pointsReceived: [],
+            totalPoints: []
+          });
+          renderCategories();
+          clearInputs();
+          document.getElementById('error1').innerHTML = ''; // Clear any previous error
+        }
+      }
+    }
+
+    // Render Categories
+    function renderCategories() {
+      const categoriesContainer = document.getElementById('categories');
+      categoriesContainer.innerHTML = '';
+      categories.forEach((category, index) => {
+        categoriesContainer.innerHTML += `<div>${category.name} (${category.weight}%)</div>`;
+      });
+    }
+
+    // Proceed to Step 2: Add Grades
+    function proceedToStep2() {
+      if (totalWeight === 100) {
+        document.getElementById('step1-container').style.display = 'none';
+        document.getElementById('step2-container').style.display = 'block';
+        renderGradeInputs();
+      } else {
+        document.getElementById('error1').innerHTML = 'Error: Total weight must equal 100%!';
+      }
+    }
+
+    // Render Grade Inputs for Step 2
+    function renderGradeInputs() {
+      const gradesContainer = document.getElementById('grades');
+      gradesContainer.innerHTML = '';
+      categories.forEach((category, index) => {
+        gradesContainer.innerHTML += `
+          <h3>${category.name}</h3>
+          <div id="grade-list-${index}"></div>
+          <div class="grade-row">
+            <input type="number" id="points-received-${index}" placeholder="Points Received" />
+            <input type="number" id="total-points-${index}" placeholder="Total Points" />
+            <button class="btn" onclick="addGrade(${index})">Add Grade</button>
+          </div>
+        `;
+      });
+    }
+
+    // Add Grade for a Category
+    function addGrade(categoryIndex) {
+      const pointsReceived = parseFloat(document.getElementById(`points-received-${categoryIndex}`).value);
+      const totalPoints = parseFloat(document.getElementById(`total-points-${categoryIndex}`).value);
+
+      if (!isNaN(pointsReceived) && !isNaN(totalPoints) && totalPoints > 0) {
+        categories[categoryIndex].pointsReceived.push(pointsReceived);
+        categories[categoryIndex].totalPoints.push(totalPoints);
+        renderGrades(categoryIndex); // Update the grade list display
+      }
+
+      clearInputs();
+    }
+
+    // Render Grades List
+    function renderGrades(categoryIndex) {
+      const gradeList = document.getElementById(`grade-list-${categoryIndex}`);
+      gradeList.innerHTML = '';
+
+      categories[categoryIndex].pointsReceived.forEach((points, gradeIndex) => {
+        const total = categories[categoryIndex].totalPoints[gradeIndex];
+        gradeList.innerHTML += `
+          <div class="grade-list-item">
+            <span>Grade: ${points}/${total}</span>
+            <button class="delete-btn" onclick="deleteGrade(${categoryIndex}, ${gradeIndex})">Delete</button>
+          </div>
+        `;
+      });
+    }
+
+    // Delete Grade
+    function deleteGrade(categoryIndex, gradeIndex) {
+      categories[categoryIndex].pointsReceived.splice(gradeIndex, 1);
+      categories[categoryIndex].totalPoints.splice(gradeIndex, 1);
+      renderGrades(categoryIndex); // Update the grade list display
+    }
+
+    // Calculate Final Grade
+    function calculateFinalGrade() {
+      let finalGrade = 0;
+
+      categories.forEach(category => {
+        let totalReceived = category.pointsReceived.reduce((acc, curr) => acc + curr, 0);
+        let totalPossible = category.totalPoints.reduce((acc, curr) => acc + curr, 0);
+        let categoryGrade = (totalReceived / totalPossible) * 100;
+        categoryGrade = Math.round(categoryGrade * 10) / 10; // round to nearest tenth
+
+        finalGrade += (categoryGrade * category.weight) / 100;
+      });
+
+      finalGrade = Math.round(finalGrade * 10) / 10;
+      document.getElementById('result').innerHTML = `Final Grade: ${finalGrade}%`;
+    }
+
+    // Clear Input Fields
+    function clearInputs() {
+      const inputs = document.querySelectorAll('input');
+      inputs.forEach(input => input.value = '');
+    }
+  </script>
+
+</body>
+</html>
