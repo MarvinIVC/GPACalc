@@ -75,19 +75,26 @@
       display: flex;
       justify-content: space-between;
       margin-bottom: 15px;
+      align-items: stretch; /* Change this from center to stretch */
     }
 
     input[type="text"], input[type="number"] {
-      width: calc(50% - 10px);
+      width: calc(30% - 5px);
       padding: 12px;
       border: 2px solid #ddd;
       border-radius: 8px;
-      margin-right: 10px;
       font-size: 0.9rem;
+      margin: 0;
+      height: 100%; /* Ensure inputs take full height of the row */
     }
 
-    input[type="number"] {
-      width: 30%;
+    .category-row .btn {
+      width: calc(40% - 5px);
+      margin: 0;
+      height: 100%; /* Ensure button takes full height of the row */
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .result {
@@ -143,13 +150,14 @@
         font-size: 1.3rem;
       }
 
-      input[type="text"], input[type="number"] {
-        width: calc(100% - 20px);
-        margin-right: 0;
+      input[type="text"], input[type="number"], .category-row .btn {
+        width: 100%;
+        margin-bottom: 10px;
       }
 
       .category-row, .grade-row {
         flex-direction: column;
+        align-items: stretch;
       }
     }
 
@@ -170,6 +178,35 @@
 
     .container::-webkit-scrollbar-thumb:hover {
       background: #555;
+    }
+
+    .category-list {
+      margin-bottom: 20px;
+    }
+
+    .category-item {
+      background-color: #f0f0f0;
+      border-radius: 8px;
+      padding: 10px 15px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      color: #333;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .category-name {
+      font-weight: bold;
+    }
+
+    .category-weight {
+      background-color: #2575fc;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
     }
   </style>
 </head>
@@ -242,10 +279,16 @@
     // Render Categories
     function renderCategories() {
       const categoriesContainer = document.getElementById('categories');
-      categoriesContainer.innerHTML = '';
+      categoriesContainer.innerHTML = '<div class="category-list">';
       categories.forEach((category, index) => {
-        categoriesContainer.innerHTML += `<div>${category.name} (${category.weight}%)</div>`;
+        categoriesContainer.innerHTML += `
+          <div class="category-item">
+            <span class="category-name">${category.name}</span>
+            <span class="category-weight">${category.weight}%</span>
+          </div>
+        `;
       });
+      categoriesContainer.innerHTML += '</div>';
     }
 
     // Proceed to Step 2: Add Grades
